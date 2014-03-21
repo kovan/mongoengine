@@ -735,5 +735,30 @@ class DeltaTest(unittest.TestCase):
         mydoc._clear_changed_fields()
         self.assertEqual([], mydoc._get_changed_fields())
 
+    def test_update_document(self):
+        import json
+
+        class Stage(EmbeddedDocument):
+            minutes = IntField()
+
+        class Notification(Document):
+            meta = {'allow_inheritance': True}
+            stages = ListField(EmbeddedDocumentField(Stage))
+            name = StringField()
+
+        Notification.drop_collection()
+        data = {"stages": [], "name": "myname"}
+        n = Notification(**data)
+        n.save()
+        n_from_json = json.loads(n.to_json())
+        n_from_json["name"] = "newname"
+        from_json = Notification.from_json(json.dumps(n_from_json))
+        from_json.save()
+        self.assertTrue(len(Notification.objects) == 1)
+
+        from_json.reload(10)
+        self.assertEqual(from_json.name, "newname")
+
+
 if __name__ == '__main__':
     unittest.main()
