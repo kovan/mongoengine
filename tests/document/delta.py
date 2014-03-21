@@ -752,13 +752,18 @@ class DeltaTest(unittest.TestCase):
         n.save()
         n_from_json = json.loads(n.to_json())
         n_from_json["name"] = "newname"
-        from_json = Notification.from_json(json.dumps(n_from_json))
-        from_json.save()
-        self.assertTrue(len(Notification.objects) == 1)
+        new_from_json = Notification.from_json(json.dumps(n_from_json))
 
-        from_json.reload(10)
-        self.assertEqual(from_json.name, "newname")
+        new_from_json.save()
 
+        new_from_json.reload(10)
+        self.assertEqual(new_from_json.name, "newname")
+
+        # but doing the save with pymongo works:
+        self.db.notification.save(new_from_json.to_mongo())
+
+        new_from_json.reload(10)
+        self.assertEqual(new_from_json.name, "newname")
 
 if __name__ == '__main__':
     unittest.main()
